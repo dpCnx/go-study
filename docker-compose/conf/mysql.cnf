@@ -1,0 +1,15 @@
+[mysqld]
+#log_bin=db51 //启用binlog日志，并指定文件名前缀
+#server_id=51 //指定服务器ID号
+#binlog-format="mixed" // 指定binlog日志格式
+validate_password_policy=0 //只验证长度
+validate_password_length=4 //修改密码长度,默认值是8个字符
+#slow_query_log=1 //启动慢查询
+#slow_query_log_file=mysql-slow.log //指定慢查询日志文件
+#long_query _time=5 //超时时间(默认10秒)
+#log_queries_not_using_indexes=1 //记录未使用查询的索引
+character-set-server=utf8
+[client]
+default-character-set=utf8
+[mysql]
+default-character-set=utf8

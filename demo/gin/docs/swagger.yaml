@@ -1,0 +1,33 @@
+basePath: /api/v1
+definitions:
+  main.Respose:
+    properties:
+      data:
+        type: object
+      msg:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API
+  license: {}
+  title: 测试
+  version: "1.0"
+paths:
+  /test:
+    post:
+      description: gin添加Api测试
+      parameters:
+      - description: 参数
+        in: formData
+        name: param
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "0":
+          schema:
+            $ref: '#/definitions/main.Respose'
+      summary: Test
+swagger: "2.0"

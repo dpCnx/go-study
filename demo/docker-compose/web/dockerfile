@@ -1,0 +1,5 @@
+FROM golang
+COPY main.go /go/src/
+WORKDIR /go/src/
+EXPOSE 8080
+ENTRYPOINT ["go","run","main.go"]

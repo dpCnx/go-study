@@ -14,9 +14,10 @@ func main() {
 	logger.InitLogger()
 
 	router := router.InitRouter()
-	router.Run()
+	_ = router.Run()
 }
 
 /*
 	https://blog.csdn.net/raogeeg/article/details/86743953
+	https://www.tizi365.com/archives/288.html  gin使用eg
 */

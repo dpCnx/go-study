@@ -4,6 +4,7 @@ import (
 	"github.com/dpCnx/go-study/demo/gin/controller"
 	"github.com/dpCnx/go-study/demo/gin/logger"
 	"github.com/dpCnx/go-study/demo/gin/middleware"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
@@ -17,6 +18,11 @@ func InitRouter() *gin.Engine {
 
 	r.Use(middleware.GinLogger(logger.GetLogger()))
 	r.Use(middleware.GinRecovery(logger.GetLogger(), true))
+	r.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
+		AllowHeaders:    []string{"Origin", "Content-Length", "Content-Type", "YS-Token"},
+	}))
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

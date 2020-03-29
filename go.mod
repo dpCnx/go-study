@@ -10,6 +10,7 @@ require (
 	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0 // indirect
+	github.com/samuel/go-zookeeper v0.0.0-20190923202752-2cc03de413da
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 	github.com/swaggo/gin-swagger v1.2.0
 	github.com/swaggo/swag v1.6.5

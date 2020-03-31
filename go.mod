@@ -3,6 +3,7 @@ module github.com/dpCnx/go-study
 go 1.12
 
 require (
+	github.com/Shopify/sarama v1.26.1
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/elastic/go-elasticsearch v0.0.0
 	github.com/gin-contrib/cors v1.3.1

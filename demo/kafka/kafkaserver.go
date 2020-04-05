@@ -55,7 +55,7 @@ func serverAsync() {
 	// send message
 	msg := &sarama.ProducerMessage{
 		Topic: "test",
-		Value:   sarama.StringEncoder("test_vale"),
+		Value: sarama.ByteEncoder([]byte("hello")),
 	}
 
 	// send to chain

@@ -13,3 +13,5 @@ character-set-server=utf8
 default-character-set=utf8
 [mysql]
 default-character-set=utf8
+#default_storage_engine=MEMORY //设置引擎,改用MEMORY引擎(默认InnoDB)
+#skip_grant_tables=1 //跳过密码验证

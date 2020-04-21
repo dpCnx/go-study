@@ -69,4 +69,6 @@ func serverAsync() {
 			log.Printf("err: %s\n", fail.Err.Error())
 		}
 	}
+
+	//producer.Close()
 }

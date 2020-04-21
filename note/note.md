@@ -21,5 +21,10 @@ gin.session
 
 ```
 sql.nullstring
+
+beego 获取返回值
+beego.InsertFilter("*", beego.AfterExec, func(c *context.Context) {}, false) //第二个参数必须位false
+requeststr := string(c.Input.RequestBody)
+outputBytes, _ := json.Marshal(c.Input.Data()["json"])
 ```
 

@@ -15,11 +15,13 @@
    	.myi 文件存储的是索引
    	.myd 文件存储的是数据
    	.frm 文件存储的是表结构
+            支持表级锁
    	
    innodb 
    	.frm 文件存储的是表结构
    	.ibd 文件存储的是数据和索引
-   	
+   	支持行级锁
+  
    	ib_logfile0 记录操作日志信息
    	ib_logfile1 记录操作日志信息
    	
@@ -31,6 +33,7 @@
 
    ```
    https://blog.csdn.net/babycan5/article/details/82789099
+  https://www.cnblogs.com/cyhbyw/p/8869855.html //乐观锁，悲观锁
    ```
-
+ 
    

@@ -22,18 +22,17 @@ var (
 
 func main() {
 	inites()
-
-	search()
+	//quary()
 }
 
 /*
 	初始es
 */
 func inites() {
+
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://192.168.60.101:9200",
-			"http://192.168.60.102:9200",
+			"http://10.25.26.195:9200",
 		},
 		Transport: &http.Transport{
 
@@ -352,18 +351,41 @@ func deleteIndex() {
 }
 
 /*
-	esapi.IndicesCreateRequest{} -->未成功
+	esapi.IndicesCreateRequest{}
 */
 func creadIndex() {
+
+	//elasticsearch7默认不在支持指定索引类型，默认索引类型是_doc
+	//elasticsearch6 可以正常执行
+	/*body := map[string]interface{}{
+		"mappings": map[string]interface{}{
+			"logs": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"title": map[string]string{
+						"type": "text",
+					},
+					"author": map[string]string{
+						"type": "text",
+					},
+					"titleScore": map[string]string{
+						"type": "double",
+					},
+				},
+			},
+		},
+	}*/
 
 	body := map[string]interface{}{
 		"mappings": map[string]interface{}{
 			"properties": map[string]interface{}{
-				"name": map[string]string{
+				"title": map[string]string{
 					"type": "text",
 				},
-				"t": map[string]string{
-					"type": "date",
+				"author": map[string]string{
+					"type": "text",
+				},
+				"titleScore": map[string]string{
+					"type": "double",
 				},
 			},
 		},
@@ -371,8 +393,10 @@ func creadIndex() {
 
 	b, _ := json.Marshal(body)
 
+	log.Println(string(b))
+
 	req := esapi.IndicesCreateRequest{
-		Index: "demo1",
+		Index: "demo3",
 		Body:  bytes.NewReader(b),
 	}
 
@@ -455,28 +479,122 @@ func quarym() {
 */
 func quary() {
 
-	body := map[string]interface{}{
+	/*body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match": map[string]string{
+				"about": "travel",
+			},
+		},
+	}*/
+
+	/*body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": map[string]interface{}{
+					"match": map[string]string{
+						"about": "travel",
+					},
+				},
+				"must_not": map[string]interface{}{
+					"match": map[string]string{
+						"sex": "boy",
+					},
+				},
+			},
+		},
+	}*/
+
+	/*body := map[string]interface{}{
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"must": map[string]interface{}{
 					"terms": map[string]interface{}{
-						"age": []string{"18", "19"},
+						"about": []string{"travel", "history"},
 					},
 				},
-				/*"filter": map[string]interface{}{
-					"term": map[string]interface{}{
-						"address": "重庆",
-					},
-				},*/
 			},
 		},
+	}*/
+
+	/*body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"range": map[string]interface{}{
+				"age": map[string]interface{}{
+					"gt":  20,
+					"lte": 25,
+				},
+			},
+		},
+	}*/
+
+	/*body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"exists": map[string]interface{}{
+				"field": "age",
+			},
+		},
+	}*/
+
+	/*body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": []map[string]interface{}{
+					{
+						"term": map[string]interface{}{
+							"about": map[string]interface{}{
+								"value": "travel",
+							},
+						},
+					},
+					{
+						"term": map[string]interface{}{
+							"name": "daqiao",
+						},
+					},
+					{
+						"range": map[string]interface{}{
+							"age": map[string]interface{}{
+								"gte": 20,
+								"lte": 30,
+							},
+						},
+					},
+				},
+			},
+		},
+	}*/
+
+	/*	body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"bool": map[string]interface{}{
+				"must": map[string]interface{}{
+					"match": map[string]interface{}{
+						"sex": "girl",
+					},
+				},
+				"filter": []map[string]interface{}{
+					{
+						"term": map[string]interface{}{
+							"age": 20,
+						},
+					},
+				},
+			},
+		},
+	}*/
+
+	body := map[string]interface{}{
+		"from": 0,
+		"size": 1,
 	}
 
 	b, _ := json.Marshal(body)
 
+	log.Println(string(b))
+
 	req := esapi.SearchRequest{
 		Index:        []string{"demo"},
-		DocumentType: []string{"test1"},
+		DocumentType: []string{"student"},
 		Body:         bytes.NewReader(b),
 	}
 
@@ -487,20 +605,28 @@ func quary() {
 	}
 	defer res.Body.Close()
 	log.Println(res.String())
+
 }
 
 func search() {
 	res, err := esclient.Search(
 		esclient.Search.WithIndex("demo"),
-		esclient.Search.WithDocumentType("test1"),
+		//esclient.Search.WithDocumentType("test1"),
 		//esclient.Search.WithSort("age:desc"),
-		//esclient.Search.WithQuery("name:c*"),
+		esclient.Search.WithQuery("name:c*"), // *：匹配任意多个字符  ？：仅匹配一个字符
 		//esclient.Search.WithScroll(3),
 		//esclient.Search.WithSize(1),
 
 		esclient.Search.WithPretty(), //格式化
 	)
 
-
 	fmt.Println(res, err)
 }
+
+//https://my.oschina.net/u/3100849/blog/1839022  类型
+
+//dynamic 新增字段情况，Dynamic 设置为 true，带有新字段的文档写入，Mapping 会更新。
+// 						Dynamic 设置为 false，Mapping 不被更新，新增字段不会被索引。
+// 						Dynamic 设置为 Strict，带有新字段的文档写入会直接报错
+
+//esapi.ScrollRequest{}

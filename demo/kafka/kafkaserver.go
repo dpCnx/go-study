@@ -6,7 +6,11 @@ import (
 )
 
 func main() {
+	server()
+}
 
+//同步
+func server() {
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll          // 发送完数据需要leader和follow都确认
 	config.Producer.Partitioner = sarama.NewRandomPartitioner // 新选出一个partition
@@ -14,7 +18,7 @@ func main() {
 	config.Producer.Return.Errors = true
 
 	// 连接kafka同步
-	client, err := sarama.NewSyncProducer([]string{"192.168.60.100:9092"}, config)
+	client, err := sarama.NewSyncProducer([]string{"10.25.27.192:9092"}, config)
 	if err != nil {
 		log.Printf("newsyncproducer err:%v", err)
 		return
@@ -23,8 +27,10 @@ func main() {
 
 	// 构造一个消息
 	msg := &sarama.ProducerMessage{
-		Topic: "test",
-		Value: sarama.StringEncoder("test_vale"),
+		Topic:     "test",
+		Value:     sarama.StringEncoder("hi"),
+		Partition: 2,
+		Key:       sarama.StringEncoder("test_key"),
 	}
 	partition, offset, err := client.SendMessage(msg)
 	if err != nil {
@@ -33,7 +39,6 @@ func main() {
 	}
 
 	log.Printf("partition:%v---offset:%v", partition, offset)
-
 }
 
 //异步
@@ -44,7 +49,7 @@ func serverAsync() {
 	config.Producer.Return.Successes = true
 	config.Producer.Return.Errors = true
 
-	producer, err := sarama.NewAsyncProducer([]string{"192.168.60.100:9092"}, config)
+	producer, err := sarama.NewAsyncProducer([]string{"10.25.27.192:9092"}, config)
 	if err != nil {
 		log.Printf("create producer error :%s\n", err.Error())
 		return
@@ -61,14 +66,18 @@ func serverAsync() {
 	// send to chain
 	producer.Input() <- msg
 
-	for {
-		select {
-		case suc := <-producer.Successes():
-			log.Printf("offset: %d,  timestamp: %s", suc.Offset, suc.Timestamp.String())
-		case fail := <-producer.Errors():
-			log.Printf("err: %s\n", fail.Err.Error())
+	go func() {
+		for {
+			select {
+			case suc := <-producer.Successes():
+				log.Printf("offset: %d,  timestamp: %s", suc.Offset, suc.Timestamp.String())
+			case fail := <-producer.Errors():
+				log.Printf("err: %s\n", fail.Err.Error())
+			}
 		}
-	}
+	}()
+
+	select {}
 
 	//producer.Close()
 }

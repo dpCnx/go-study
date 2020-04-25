@@ -45,3 +45,5 @@ func main() {
 	}
 
 }
+
+//protoc --go_out=plugins=grpc:./ *.proto #添加grpc插件

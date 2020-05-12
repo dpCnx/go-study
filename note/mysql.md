@@ -34,6 +34,10 @@
    ```
    https://blog.csdn.net/babycan5/article/details/82789099
   https://www.cnblogs.com/cyhbyw/p/8869855.html //乐观锁，悲观锁
+  对列col1、列col2和列col3建一个联合索引
+  
+  KEY test_col1_col2_col3 on test(col1,col2,col3);
+  联合索引 test_col1_col2_col3 实际建立了(col1)、(col1,col2)、(col,col2,col3)三个索引
    ```
  
    

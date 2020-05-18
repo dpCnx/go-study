@@ -24,3 +24,7 @@ func main() {
 	micro.RegisterHandler(service.Server(), new(ServiceOne))
 	service.Run()
 }
+
+/*
+	https://studygolang.com/subject/521 熔断，限流
+*/

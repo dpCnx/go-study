@@ -1,8 +1,8 @@
 package binarysearchtree
 
 type BinarySearchTree struct {
-	nodeRoot *Node
-	size     int
+	nodeRoot   *Node
+	size       int
 }
 
 type Node struct {
@@ -33,7 +33,7 @@ func (t *BinarySearchTree) Clear() {
 }
 
 func (t *BinarySearchTree) Add(e interface{}) {
-	checkElementNotNil(e)
+	t.checkElementNotNil(e)
 
 	//添加第一个节点
 	if t.nodeRoot == nil {
@@ -48,7 +48,7 @@ func (t *BinarySearchTree) Add(e interface{}) {
 
 	for node != nil {
 		parent = node
-		cmd = compare(e, node.Element)
+		cmd = t.compare(e, node.Element)
 		if cmd > 0 {
 			node = node.NodeRight
 		} else if cmd < 0 {
@@ -69,11 +69,11 @@ func (t *BinarySearchTree) Add(e interface{}) {
 
 }
 
-func compare(e interface{}, Element interface{}) int {
-	return -1
+func (t *BinarySearchTree) compare(e1 interface{}, e2 interface{}) int {
+	return e1.(Comparator).Compare(e1, e2)
 }
 
-func checkElementNotNil(e interface{}) {
+func (t *BinarySearchTree) checkElementNotNil(e interface{}) {
 	if e == nil {
 		panic("element not nil")
 	}

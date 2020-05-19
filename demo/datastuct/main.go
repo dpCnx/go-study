@@ -6,9 +6,13 @@ import (
 )
 
 func main() {
+	var a binarysearchtree.Myint = 1
+	var b binarysearchtree.Myint = 2
+
 	t := binarysearchtree.BinarySearchTree{}
-	t.Add(1)
-	t.Add(2)
+	t.Add(a)
+	t.Add(b)
 
 	fmt.Println(t.GetSize())
+
 }

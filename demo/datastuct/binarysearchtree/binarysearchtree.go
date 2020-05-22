@@ -1,44 +1,7 @@
 package binarysearchtree
 
-import (
-	"container/list"
-	"fmt"
-)
-
 type BinarySearchTree struct {
-	nodeRoot  *Node
-	size      int
-	VCallBack CB
-	IsStop    bool //是否停止遍历
-}
-
-type CB func(v interface{}) bool
-
-type Node struct {
-	Element    interface{}
-	NodeRight  *Node
-	NodeLeft   *Node
-	NodeParent *Node
-}
-
-func CreateNode(e interface{}, parent *Node) *Node {
-	return &Node{
-		Element:    e,
-		NodeParent: parent,
-	}
-}
-
-func (t *BinarySearchTree) GetSize() int {
-	return t.size
-}
-
-func (t *BinarySearchTree) IsEmpty() bool {
-	return t.size == 0
-}
-
-func (t *BinarySearchTree) Clear() {
-	t.nodeRoot = nil
-	t.size = 0
+	BaseSearchTree
 }
 
 func (t *BinarySearchTree) Add(e interface{}) {
@@ -78,6 +41,72 @@ func (t *BinarySearchTree) Add(e interface{}) {
 
 }
 
+/*
+	有问题
+*/
+func (t *BinarySearchTree) RemoveElement(e interface{}) {
+	t.Remove(t.GetNode(e))
+}
+
+func (t *BinarySearchTree) GetNode(e interface{}) *Node {
+	n := t.nodeRoot
+	for n != nil {
+		cmp := t.compare(e, n.Element)
+		if cmp == 0 {
+			return n
+		} else if cmp > 0 {
+			n = n.NodeRight
+		} else {
+			n = n.NodeLeft
+		}
+	}
+
+	return nil
+}
+
+func (t *BinarySearchTree) Remove(n *Node) {
+	if n == nil {
+		return
+	}
+
+	t.size--
+
+	if n.HastwoChild() {
+		afterN := t.successor(n)
+
+		n.Element = afterN.Element
+
+		n = afterN
+	}
+
+	var replacement *Node
+
+	if n.NodeLeft != nil {
+		replacement = n.NodeLeft
+	} else {
+		replacement = n.NodeRight
+	}
+
+	if replacement != nil {
+		replacement.NodeParent = n.NodeParent
+		if n.NodeParent == nil {
+			t.nodeRoot = replacement
+		} else if n == n.NodeParent.NodeLeft {
+			n.NodeParent.NodeLeft = replacement
+		} else {
+			n.NodeParent.NodeRight = replacement
+		}
+	} else if n.NodeParent == nil {
+		t.nodeRoot = nil
+	} else {
+		if n == n.NodeParent.NodeLeft {
+			n.NodeParent.NodeLeft = nil
+		} else {
+			n.NodeParent.NodeRight = nil
+		}
+	}
+}
+
 func (t *BinarySearchTree) compare(e1 interface{}, e2 interface{}) int {
 	return e1.(Comparator).Compare(e1, e2)
 }
@@ -86,91 +115,4 @@ func (t *BinarySearchTree) checkElementNotNil(e interface{}) {
 	if e == nil {
 		panic("element not nil")
 	}
-}
-
-//前序遍历
-
-func (t *BinarySearchTree) PreOrderPrint() {
-	t.PreOrderPrintLooper(t.nodeRoot)
-}
-
-func (t *BinarySearchTree) PreOrderPrintLooper(n *Node) {
-
-	if n == nil || t.IsStop {
-		return
-	}
-
-	if t.VCallBack != nil {
-		t.IsStop = t.VCallBack(n.Element)
-	}
-	//fmt.Println(n.Element)
-	t.PreOrderPrintLooper(n.NodeLeft)
-	t.PreOrderPrintLooper(n.NodeRight)
-}
-
-//中序遍历
-
-func (t *BinarySearchTree) MidOrderPrint() {
-	t.MidOrderPrintLooper(t.nodeRoot)
-}
-
-func (t *BinarySearchTree) MidOrderPrintLooper(n *Node) {
-
-	if n == nil || t.IsStop {
-		return
-	}
-
-	t.MidOrderPrintLooper(n.NodeLeft)
-
-	if t.IsStop {
-		return
-	}
-
-	if t.VCallBack != nil {
-		t.IsStop = t.VCallBack(n.Element)
-	}
-	//fmt.Println(n.Element)
-	t.MidOrderPrintLooper(n.NodeRight)
-}
-
-//后序遍历
-
-func (t *BinarySearchTree) AfterOrderPrint() {
-	t.AfterOrderPrintLooper(t.nodeRoot)
-}
-
-func (t *BinarySearchTree) AfterOrderPrintLooper(n *Node) {
-
-	if n == nil {
-		return
-	}
-
-	t.AfterOrderPrintLooper(n.NodeLeft)
-	t.AfterOrderPrintLooper(n.NodeRight)
-	fmt.Println(n.Element)
-}
-
-//层序遍历
-func (t *BinarySearchTree) LevelOrderPrint() {
-	if t.nodeRoot == nil {
-		return
-	}
-
-	l := list.New()
-	l.PushBack(t.nodeRoot)
-
-	for l.Len() != 0 {
-		n := l.Remove(l.Front()).(*Node)
-		if t.VCallBack != nil {
-			_ = t.VCallBack(n.Element)
-		}
-		//fmt.Println(n.Element)
-		if n.NodeLeft != nil {
-			l.PushBack(n.NodeLeft)
-		}
-		if n.NodeRight != nil {
-			l.PushBack(n.NodeRight)
-		}
-	}
-
 }

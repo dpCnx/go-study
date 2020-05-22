@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"github.com/dpCnx/go-study/demo/datastuct/binarysearchtree"
-	"log"
 )
 
 func main() {
@@ -27,16 +27,24 @@ func main() {
 	t.Add(h)
 	t.Add(i)
 
-	y := 0
-	t.VCallBack = func(v interface{}) bool {
-		if y == 2 {
-			return true
-		}
+	/*	y := 0
+		t.VCallBack = func(v interface{}) bool {
+			if y == 2 {
+				return true
+			}
 
-		log.Println(v)
-		y++
-		return false
-	}
+			log.Println(v)
+			y++
+			return false
+		}*/
 
-	t.PreOrderPrint()
+	t.AfterOrderPrint()
+
+	fmt.Println()
+
+	t.RemoveElement(8)
+
+	t.AfterOrderPrint()
+
+	//fmt.Println(t.Height())
 }

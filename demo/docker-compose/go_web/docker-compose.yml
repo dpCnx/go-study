@@ -38,7 +38,7 @@ services:
     #command: mongod -f /etc/mongodb.conf
   web:
     container_name: web
-    build: ./web
+    build: web
     restart: always
     network_mode: bridge
     ports:

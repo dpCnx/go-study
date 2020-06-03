@@ -1,0 +1,38 @@
+version: "3"
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.7.0
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.type=single-node"
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+      - ./elasticsearch/logs:/usr/share/elasticsearch/logs
+    container_name: elasticsearch
+    hostname: elasticsearch
+    restart: always
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.7.0
+    environment:
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    container_name: kibana
+    hostname: kibana
+    depends_on:
+      - elasticsearch
+    restart: always
+    ports:
+      - "5601:5601"
+  elasticsearch-head:
+    image: mobz/elasticsearch-head:5
+    container_name: head
+    volumes:
+      - ./elasticsearch/head/Gruntfile.js:/usr/src/app/Gruntfile.js
+      - ./elasticsearch/head/_site/app.js:/usr/src/app/_site/app.js
+    restart: always
+    ports:
+      - "9100:9100"
+    depends_on:
+      - elasticsearch

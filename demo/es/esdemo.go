@@ -598,6 +598,8 @@ func quary() {
 		Body:         bytes.NewReader(b),
 	}
 
+	//req.Query = "*:test3" 可以通过query 添加条件 *代表查询所有的字段
+
 	res, err := req.Do(context.Background(), esclient)
 	if err != nil {
 		log.Println("get err:", err)
@@ -613,6 +615,7 @@ func search() {
 		esclient.Search.WithIndex("demo"),
 		//esclient.Search.WithDocumentType("test1"),
 		//esclient.Search.WithSort("age:desc"),
+		//esclient.Search.WithQuery("*:test3"), // *：匹配任意多个字符  相当于匹配所有字段
 		esclient.Search.WithQuery("name:c*"), // *：匹配任意多个字符  ？：仅匹配一个字符
 		//esclient.Search.WithScroll(3),
 		//esclient.Search.WithSize(1),

@@ -20,9 +20,15 @@ var (
 	err      error
 )
 
+type Student struct {
+	Name    string `json:"name"`
+	Age     int    `json:"age"`
+	Address string `json:"address"`
+}
+
 func main() {
 	inites()
-	//quary()
+	quary()
 }
 
 /*
@@ -32,7 +38,7 @@ func inites() {
 
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"http://10.25.26.195:9200",
+			"http://10.25.24.93:9200",
 		},
 		Transport: &http.Transport{
 
@@ -583,9 +589,28 @@ func quary() {
 		},
 	}*/
 
-	body := map[string]interface{}{
+	/*body := map[string]interface{}{
 		"from": 0,
 		"size": 1,
+	}*/
+
+	//search_after 使用 通过第一次的返回值里面的sort继续查询
+	// https://blog.csdn.net/UbuntuTouch/article/details/101036040
+	body := map[string]interface{}{
+		"query": map[string]interface{}{
+			"match_all": map[string]interface{}{},
+		},
+		"sort": []map[string]interface{}{
+			{
+				"DOB": map[string]interface{}{
+					"order": "asc",
+				},
+			},
+		},
+		"size": 2,
+		"search_after": []string{
+			"347155200000",
+		},
 	}
 
 	b, _ := json.Marshal(body)
@@ -593,9 +618,10 @@ func quary() {
 	log.Println(string(b))
 
 	req := esapi.SearchRequest{
-		Index:        []string{"demo"},
-		DocumentType: []string{"student"},
+		Index:        []string{"twitter"},
+		DocumentType: []string{"_doc"},
 		Body:         bytes.NewReader(b),
+		Pretty:       true,
 	}
 
 	//req.Query = "*:test3" 可以通过query 添加条件 *代表查询所有的字段

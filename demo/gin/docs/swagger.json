@@ -28,7 +28,7 @@
                 "responses": {
                     "0": {
                         "schema": {
-                            "$ref": "#/definitions/main.Respose"
+                            "$ref": "#/definitions/model.ResponseData"
                         }
                     }
                 }
@@ -36,13 +36,16 @@
         }
     },
     "definitions": {
-        "main.Respose": {
+        "model.ResponseData": {
             "type": "object",
             "properties": {
+                "code": {
+                    "type": "integer"
+                },
                 "data": {
                     "type": "object"
                 },
-                "msg": {
+                "message": {
                     "type": "string"
                 }
             }

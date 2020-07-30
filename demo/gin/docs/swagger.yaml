@@ -1,10 +1,12 @@
 basePath: /api/v1
 definitions:
-  main.Respose:
+  model.ResponseData:
     properties:
+      code:
+        type: integer
       data:
         type: object
-      msg:
+      message:
         type: string
     type: object
 info:
@@ -28,6 +30,6 @@ paths:
       responses:
         "0":
           schema:
-            $ref: '#/definitions/main.Respose'
+            $ref: '#/definitions/model.ResponseData'
       summary: Test
 swagger: "2.0"

@@ -2,7 +2,6 @@ package router
 
 import (
 	"github.com/dpCnx/go-study/demo/gin/controller"
-	"github.com/dpCnx/go-study/demo/gin/logger"
 	"github.com/dpCnx/go-study/demo/gin/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -13,11 +12,11 @@ import (
 func InitRouter() *gin.Engine {
 
 	r := gin.New()
-	//r.Use(gin.Logger())
-	//r.Use(gin.Recovery())
+	/*	r.Use(gin.Logger())
+		r.Use(gin.Recovery())*/
 
-	r.Use(middleware.GinLogger(logger.GetLogger()))
-	r.Use(middleware.GinRecovery(logger.GetLogger(), true))
+	r.Use(middleware.GinLogger(),middleware.GinRecovery(true))
+
 	r.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
 		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},

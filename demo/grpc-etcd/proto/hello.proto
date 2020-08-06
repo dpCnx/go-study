@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package protoes;
+
+service HelloServer{
+    rpc SayHi(HelloRequest)returns(HelloReplay){}
+    rpc GetMsg(HelloRequest)returns(HelloMessage){}
+}
+
+message HelloRequest{
+    string name = 1 ;
+}
+
+message HelloReplay{
+    string message = 1;
+}
+
+message HelloMessage{
+    string msg = 1;
+}

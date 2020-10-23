@@ -1,0 +1,20 @@
+version: '3'
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    restart: always
+    volumes:
+      - './prometheus.yml:/etc/prometheus/prometheus.yml'
+    network_mode: bridge
+    ports:
+      - "9090:9090"
+  node-exporter:
+    container_name: node-exporter
+    image: prom/node-exporter:latest
+    restart: always
+    network_mode: bridge
+    ports:
+      - "9100:9100"
+    depends_on:
+      - prometheus

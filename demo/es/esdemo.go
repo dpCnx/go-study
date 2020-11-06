@@ -3,20 +3,16 @@ package main
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch"
-	"github.com/elastic/go-elasticsearch/esapi"
+	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
+	esapi7 "github.com/elastic/go-elasticsearch/v7/esapi"
 	"log"
-	"net"
-	"net/http"
 	"strings"
-	"time"
 )
 
 var (
-	esclient *elasticsearch.Client
+	esclient *elasticsearch7.Client
 	err      error
 )
 
@@ -36,34 +32,13 @@ func main() {
 */
 func inites() {
 
-	cfg := elasticsearch.Config{
+	cfg := elasticsearch7.Config{
 		Addresses: []string{
 			"http://10.25.24.93:9200",
 		},
-		Transport: &http.Transport{
-
-			// MaxIdleConnsPerHost，如果非零，则控制最大空闲 (keep-alive)保持每个主机的连接。
-			//如果为零, 使用DefaultMaxIdleConnsPerHost
-			MaxIdleConnsPerHost: 10,
-			// 如果非零，指定的数量 等待服务器响应报头的时间 编写请求(包括请求正文，如果有的话)。
-			//这时间不包括读取响应体的时间。
-			ResponseHeaderTimeout: 30 * time.Second,
-			//DialContext与往返电话同时运行。
-			//发起拨号的往返呼叫可能最终使用
-			//以前连接时所拨打的连接
-			//在后面的拨号连接完成之前就空闲了。
-			DialContext: (&net.Dialer{Timeout: time.Second}).DialContext,
-
-			// TLSClientConfig指定要使用的TLS配置
-			// tls.Client。如果为空，则使用默认配置。
-			//如果非nil, HTTP/2支持可能默认不启用。
-			TLSClientConfig: &tls.Config{
-				MinVersion: tls.VersionTLS11,
-			},
-		},
 	}
 
-	esclient, err = elasticsearch.NewClient(cfg)
+	esclient, err = elasticsearch7.NewClient(cfg)
 	if err != nil {
 		log.Println("init es err :", err)
 		return
@@ -81,7 +56,7 @@ func inites() {
 	获取节点
 */
 func getnodes() {
-	nodesRequest := esapi.CatNodesRequest{}
+	nodesRequest := esapi7.CatNodesRequest{}
 	respose, err := nodesRequest.Do(context.Background(), esclient)
 	if err != nil {
 		log.Println("nodes err:", err)
@@ -111,7 +86,7 @@ func insert() {
 	}
 	jsonBody, _ := json.Marshal(body)
 
-	req := esapi.CreateRequest{ // 如果是esapi.IndexRequest则是插入/替换
+	req := esapi7.CreateRequest{ // 如果是esapi.IndexRequest则是插入/替换
 		Index:        "demo",
 		DocumentType: "test1",
 		DocumentID:   "1",
@@ -193,7 +168,7 @@ func insert3() {
 	data.Write(jsonBody)
 	data.WriteByte('\n')
 
-	req := esapi.BulkRequest{
+	req := esapi7.BulkRequest{
 		Index:        "demo",
 		DocumentType: "test1",
 		Body:         &data,
@@ -255,7 +230,7 @@ func update() {
 		},
 	}
 	jsonBody, _ := json.Marshal(body)
-	req := esapi.UpdateRequest{
+	req := esapi7.UpdateRequest{
 		Index:        "demo",
 		DocumentType: "test1",
 		DocumentID:   "1",
@@ -295,7 +270,7 @@ func update2() {
 	esapi.DeleteRequest
 */
 func delete() {
-	req := esapi.DeleteRequest{
+	req := esapi7.DeleteRequest{
 		Index:        "demo",
 		DocumentType: "test1",
 		DocumentID:   "1",
@@ -323,7 +298,7 @@ func delete2() {
 		},
 	}
 	jsonBody, _ := json.Marshal(body)
-	req := esapi.DeleteByQueryRequest{
+	req := esapi7.DeleteByQueryRequest{
 		Index:        []string{"demo"},
 		DocumentType: []string{"test1"},
 		Body:         bytes.NewReader(jsonBody),
@@ -342,7 +317,7 @@ func delete2() {
 */
 func deleteIndex() {
 
-	req := esapi.IndicesDeleteRequest{
+	req := esapi7.IndicesDeleteRequest{
 		Index: []string{"test1"},
 	}
 
@@ -401,7 +376,7 @@ func creadIndex() {
 
 	log.Println(string(b))
 
-	req := esapi.IndicesCreateRequest{
+	req := esapi7.IndicesCreateRequest{
 		Index: "demo3",
 		Body:  bytes.NewReader(b),
 	}
@@ -439,7 +414,7 @@ func createIndex2() {
 }
 
 func quaryone() {
-	req := esapi.GetRequest{
+	req := esapi7.GetRequest{
 		Index:        "demo",
 		DocumentType: "test1",
 		DocumentID:   "2",
@@ -466,7 +441,7 @@ func quarym() {
 		},
 	}
 	jsonBody, _ := json.Marshal(body)
-	req := esapi.MgetRequest{
+	req := esapi7.MgetRequest{
 		Index:        "demo",
 		DocumentType: "test1",
 		Body:         bytes.NewReader(jsonBody),
@@ -617,7 +592,7 @@ func quary() {
 
 	log.Println(string(b))
 
-	req := esapi.SearchRequest{
+	req := esapi7.SearchRequest{
 		Index:        []string{"twitter"},
 		DocumentType: []string{"_doc"},
 		Body:         bytes.NewReader(b),
@@ -652,10 +627,32 @@ func search() {
 	fmt.Println(res, err)
 }
 
+func searchSql() {
+
+	body := map[string]interface{}{
+		"query": "SELECT * FROM demo WHERE age = 18",
+	}
+	jsonBody, _ := json.Marshal(body)
+
+	req := esapi7.SQLQueryRequest{
+		Body:   bytes.NewReader(jsonBody),
+		Format: "json",
+		Pretty: true,
+	}
+
+	res, err := req.Do(context.Background(), esclient)
+	if err != nil {
+		log.Println("get err:", err)
+		return
+	}
+	defer res.Body.Close()
+	log.Println(res.String())
+}
+
 //https://my.oschina.net/u/3100849/blog/1839022  类型
 
-//dynamic 新增字段情况，Dynamic 设置为 true，带有新字段的文档写入，Mapping 会更新。
-// 						Dynamic 设置为 false，Mapping 不被更新，新增字段不会被索引。
-// 						Dynamic 设置为 Strict，带有新字段的文档写入会直接报错
+/*dynamic 新增字段情况，Dynamic 设置为 true，带有新字段的文档写入，Mapping 会更新。
+Dynamic 设置为 false，Mapping 不被更新，新增字段不会被索引。
+Dynamic 设置为 Strict，带有新字段的文档写入会直接报错*/
 
 //esapi.ScrollRequest{}

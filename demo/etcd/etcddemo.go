@@ -2,336 +2,258 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"log"
 	"time"
 )
 
-/*
-	https://www.jianshu.com/p/2c1f56814ea5 //简单使用
-	https://blog.csdn.net/u010649766/article/details/89643699 //docker部署
-	https://www.jianshu.com/p/44022c67f117 //docker部署集群
-	https://blog.csdn.net/bbwangj/article/details/82584988 //介绍
-*/
+var (
+	client *clientv3.Client
+	err    error
+)
 
 func main() {
+	initEtcd()
+
+	txnclient()
 
 }
 
-func txnclient() {
-	var (
-		config         clientv3.Config
-		client         *clientv3.Client
-		err            error
-		lease          clientv3.Lease
-		leaseGrantResp *clientv3.LeaseGrantResponse
-		leaseId        clientv3.LeaseID
-		keepRespChan   <-chan *clientv3.LeaseKeepAliveResponse
-		keepResp       *clientv3.LeaseKeepAliveResponse
-		ctx            context.Context
-		cancelFunc     context.CancelFunc
-		kv             clientv3.KV
-		txn            clientv3.Txn
-		txnResp        *clientv3.TxnResponse
-	)
-	// 客户端配置
-	config = clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
+func initEtcd() {
+
+	config := clientv3.Config{
+		Endpoints:   []string{"192.168.172.129:2379"},
 		DialTimeout: 5 * time.Second,
 	}
-	// 建立连接
 	if client, err = clientv3.New(config); err != nil {
-		fmt.Println(err)
+		log.Printf("init etcd err: %v\n", err.Error())
+		return
 	}
-	// lease实现锁自动过期:
-	// op操作
-	// txn事务: if else then
-	// 1, 上锁 (创建租约, 自动续租, 拿着租约去抢占一个key)
-	lease = clientv3.NewLease(client)
-	// 申请一个5秒的租约
-	if leaseGrantResp, err = lease.Grant(context.TODO(), 5); err != nil {
-		fmt.Println(err)
+
+	log.Println("init etcd successful")
+}
+
+func kvClient() {
+
+	kv := clientv3.NewKV(client)
+
+	if putResp, err := kv.Put(context.Background(), "/test/oneKey", "oneValue"); err != nil {
+		log.Printf("kv put err:%v\n", err.Error())
+		return
+	} else {
+		log.Println("revision:", putResp.Header.Revision)
+		if putResp.PrevKv != nil {
+			log.Println("prevvalue:", string(putResp.PrevKv.Value))
+			log.Println("prevvalue:", string(putResp.PrevKv.Version))
+		}
 	}
-	// 拿到租约的ID
-	leaseId = leaseGrantResp.ID
-	// 准备一个用于取消自动续租的context
-	ctx, cancelFunc = context.WithCancel(context.TODO())
-	// 确保函数退出后, 自动续租会停止
-	defer cancelFunc()
-	defer lease.Revoke(context.TODO(), leaseId)
-	// 5秒后会取消自动续租
-	if keepRespChan, err = lease.KeepAlive(ctx, leaseId); err != nil {
-		fmt.Println(err)
+
+	if getResp, err := kv.Get(context.Background(), "/test/oneKey"); err != nil {
+		log.Printf("kv get err:%v\n", err.Error())
+		return
+	} else {
+		log.Println("getResp >>", getResp.Kvs)
 	}
-	// 处理续约应答的协程
-	go func() {
-		for {
-			select {
-			case keepResp = <-keepRespChan:
-				if keepRespChan == nil {
-					fmt.Println("租约已经失效了")
-					return
-				} else { // 每秒会续租一次, 所以就会受到一次应答
-					fmt.Println("收到自动续租应答:", keepResp.ID)
-				}
+
+	if getResp, err := kv.Get(context.Background(), "/test/oneKey", clientv3.WithPrefix()); err != nil {
+		log.Printf("kv get err:%v\n", err.Error())
+		return
+	} else {
+		log.Println("getResp >>", getResp.Kvs)
+	}
+
+	if delResp, err := kv.Delete(context.TODO(), "/test/oneKey", clientv3.WithFromKey()); err != nil {
+		log.Printf("kv delete err:%v\n", err.Error())
+		return
+	} else {
+
+		log.Println(delResp)
+
+		if len(delResp.PrevKvs) != 0 {
+			for _, kvpair := range delResp.PrevKvs {
+				log.Printf("delete: %s  %s \n", string(kvpair.Key), string(kvpair.Value))
 			}
 		}
-	}()
-	//  if 不存在key， then 设置它, else 抢锁失败
-	kv = clientv3.NewKV(client)
-	// 创建事务
-	txn = kv.Txn(context.TODO())
-	// 定义事务
-	// 如果key不存在
-	// /demo/lock这个key对应的value”必须等于”lockvaule ” 返回的是成功就执行then 失败就执行else
-	txn.If(clientv3.Compare(clientv3.CreateRevision("/demo/lock"), "=", 0)).
-		Then(clientv3.OpPut("/demo/lock", "lockvaule", clientv3.WithLease(leaseId))).
-		Else(clientv3.OpGet("/demo/lock"))
-	// 提交事务
-	if txnResp, err = txn.Commit(); err != nil {
-		fmt.Println("err")
 	}
-	fmt.Println("res:", txnResp.Succeeded)
-	// 判断是否抢到了锁
-	if !txnResp.Succeeded {
-		fmt.Println("锁被占用:", string(txnResp.Responses[0].GetResponseRange().Kvs[0].Value))
-	}
-	// 2, 处理业务
-	fmt.Println("处理任务")
-	time.Sleep(50 * time.Second)
-	// 3, 释放锁(取消自动续租, 释放租约)
-	// defer 会把租约释放掉, 关联的KV就被删除了
+
+	/*
+		clientv3.WithPrefix()
+		clientv3.WithCountOnly()
+		clientv3.WithLimit(2)
+	*/
+
 }
 
 func opclient() {
-	var (
-		config clientv3.Config
-		client *clientv3.Client
-		err    error
-		kv     clientv3.KV
-		putOp  clientv3.Op
-		getOp  clientv3.Op
-		opResp clientv3.OpResponse
-	)
-	// 客户端配置
-	config = clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-	}
-	// 建立连接
-	if client, err = clientv3.New(config); err != nil {
-		fmt.Println(err)
+
+	kv := clientv3.NewKV(client)
+
+	putOp := clientv3.OpPut("/test/op", "opvaule")
+	if opResp, err := kv.Do(context.TODO(), putOp); err != nil {
+		log.Printf("kv putop err :%v\n", err.Error())
 		return
+	} else {
+		log.Println("revision:", opResp.Put().Header.Revision)
+		if opResp.Put().PrevKv != nil {
+			log.Println("prevvalue:", string(opResp.Put().PrevKv.Value))
+			log.Println("prevvalue:", string(opResp.Put().PrevKv.Version))
+		}
 	}
-	kv = clientv3.NewKV(client)
-	// 创建Op: operation
-	putOp = clientv3.OpPut("/demo/op", "opvaule")
-	// 执行OP
-	if opResp, err = kv.Do(context.TODO(), putOp); err != nil {
-		fmt.Println(err)
+
+	getOp := clientv3.OpGet("/test/op")
+	if opResp, err := kv.Do(context.TODO(), getOp); err != nil {
+		log.Printf("kv getop err :%v\n", err.Error())
 		return
+	} else {
+		log.Println("revision:", opResp.Get().Header.Revision)
+		log.Println("Kvs:", opResp.Get().Kvs)
 	}
+
 	// kv.Do(op)
 	// kv.Put
 	// kv.Get
 	// kv.Delete
-	fmt.Println("写入Revision:", opResp.Put().Header.Revision)
-	// 创建Op
-	getOp = clientv3.OpGet("/demo/op")
-	// 执行OP
-	if opResp, err = kv.Do(context.TODO(), getOp); err != nil {
-		fmt.Println(err)
-		return
-	}
-	// 打印
-	fmt.Println("数据Revision:", opResp.Get().Kvs[0].ModRevision)
-	// create rev == mod rev
-	fmt.Println("数据value:", string(opResp.Get().Kvs[0].Value))
 }
 
 func watchclient() {
-	var (
-		config             clientv3.Config
-		client             *clientv3.Client
-		kv                 clientv3.KV
-		getResp            *clientv3.GetResponse
-		watcher            clientv3.Watcher
-		watchRespChan      <-chan clientv3.WatchResponse
-		watchResp          clientv3.WatchResponse
-		watchStartRevision int64
-		event              *clientv3.Event
-		err                error
-	)
-	config = clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-	}
-	if client, err = clientv3.New(config); err != nil {
-		fmt.Println("new client err:", err)
-	}
-	kv = clientv3.NewKV(client)
-	// 模拟etcd中KV的变化
+
+	kv := clientv3.NewKV(client)
+
 	go func() {
 		for {
-			kv.Put(context.TODO(), "/demo/watch", "watchvaule")
+			_, err = kv.Put(context.TODO(), "/test/watch", "watchValue")
+			if err != nil {
+				log.Printf("kv put err:%v\n", err.Error())
+				return
+			}
 
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 
-			kv.Delete(context.TODO(), "/demo/watch")
+			_, err = kv.Delete(context.TODO(), "/test/watch")
+			if err != nil {
+				log.Printf("kv put err:%v\n", err.Error())
+				return
+			}
 		}
 	}()
-	if getResp, err = kv.Get(context.TODO(), "/demo/watch"); err != nil {
-		fmt.Println(err)
+
+	if getResp, err := kv.Get(context.TODO(), "/test/watch"); err != nil {
+		log.Printf("kv get err:%v\n", err.Error())
 		return
-	}
-	if len(getResp.Kvs) != 0 {
-		fmt.Println("当前值:", string(getResp.Kvs[0].Value))
-	}
-	// 当前etcd集群事务ID, 单调递增的
-	watchStartRevision = getResp.Header.Revision + 1
-	watcher = clientv3.NewWatcher(client)
-	watchRespChan = watcher.Watch(context.Background(), "/demo/watch", clientv3.WithRev(watchStartRevision))
-	// 处理kv变化事件
-	for watchResp = range watchRespChan {
-		for _, event = range watchResp.Events {
-			switch event.Type {
-			case mvccpb.PUT:
-				fmt.Println("修改为:", string(event.Kv.Value), "Revision:", event.Kv.CreateRevision, event.Kv.ModRevision)
-			case mvccpb.DELETE:
-				fmt.Println("删除了", "Revision:", event.Kv.ModRevision)
+	} else {
+		if len(getResp.Kvs) != 0 {
+			log.Println("getResp:", getResp.Kvs)
+		}
+
+		watcher := clientv3.NewWatcher(client)
+		watchRespChan := watcher.Watch(context.Background(), "/test/watch", clientv3.WithPrefix())
+
+		for watchResp := range watchRespChan {
+			for _, event := range watchResp.Events {
+				switch event.Type {
+				case mvccpb.PUT:
+					log.Println("update:", string(event.Kv.Key), string(event.Kv.Key), "Revision:", event.Kv.CreateRevision, event.Kv.ModRevision)
+				case mvccpb.DELETE:
+					log.Println("delete:", string(event.Kv.Key), "Revision:", event.Kv.ModRevision)
+				}
 			}
 		}
 	}
 }
 
 func leaseclient() {
-	var (
-		config         clientv3.Config
-		client         *clientv3.Client
-		lease          clientv3.Lease
-		leaseGrantResp *clientv3.LeaseGrantResponse
-		leaseId        clientv3.LeaseID
-		kv             clientv3.KV
-		getResp        *clientv3.GetResponse
-		keepRespChan   <-chan *clientv3.LeaseKeepAliveResponse
-		keepResp       *clientv3.LeaseKeepAliveResponse
-		err            error
-	)
-	config = clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-	}
-	if client, err = clientv3.New(config); err != nil {
-		fmt.Println("new client err:", err)
-	}
+
 	// 租约lease
-	lease = clientv3.NewLease(client)
+	lease := clientv3.NewLease(client)
 	// 申请一个10秒的租约
-	if leaseGrantResp, err = lease.Grant(context.TODO(), 10); err != nil {
-		fmt.Println(err)
+	leaseGrantResp, err := lease.Grant(context.Background(), 10)
+	if err != nil {
+		log.Printf("lease grant err :%v \n", err.Error())
+		return
 	}
-	leaseId = leaseGrantResp.ID
-	fmt.Println("leaseId:", leaseId)
+	leaseId := leaseGrantResp.ID
+	log.Println("leaseId:", leaseId)
 	// 自动续租
-	if keepRespChan, err = lease.KeepAlive(context.TODO(), leaseId); err != nil {
-		fmt.Println(err)
+	keepRespChan, err := lease.KeepAlive(context.Background(), leaseId)
+	if err != nil {
+		log.Printf("lease keepalive err :%v \n", err.Error())
+		return
 	}
 	// 处理续约应答的协程
 	go func() {
 		for {
 			select {
-			case keepResp = <-keepRespChan:
+			case keepResp := <-keepRespChan:
 				if keepRespChan == nil {
-					fmt.Println("租约已经失效了")
+					log.Println("租约已经失效了")
 					return
-				} else { // 自动定时的续约某个租约
-					fmt.Println("收到自动续租应答:", time.Now())
+				} else {
+					// 自动定时的续约某个租约
+					log.Println("收到自动续租应答:", keepResp.ID, "time:", time.Now())
 				}
 			}
 		}
 	}()
-	kv = clientv3.NewKV(client)
-	if _, err = kv.Put(context.TODO(), "/demo/leaseone", "leaseonevaule", clientv3.WithLease(leaseId)); err != nil {
-		fmt.Println(err)
+	kv := clientv3.NewKV(client)
+	if _, err = kv.Put(context.TODO(), "/test/lease", "leaseValue", clientv3.WithLease(leaseId)); err != nil {
+		log.Printf("kv put err :%v \n", err.Error())
+		return
 	}
 	// 定时的看一下key过期了没有
 	for {
-		if getResp, err = kv.Get(context.TODO(), "/demo/leaseone"); err != nil {
-			fmt.Println(err)
+		getResp, err := kv.Get(context.Background(), "/test/lease")
+
+		if err != nil {
+			log.Printf("kv get err :%v \n", err.Error())
 			return
 		}
 		if getResp.Count == 0 {
-			fmt.Println("kv过期了")
+			log.Println("kv过期")
 			break
 		}
-		fmt.Println("还没过期:", getResp.Kvs)
+		log.Println("还没过期:", getResp.Kvs)
 		time.Sleep(2 * time.Second)
 	}
 }
 
-func kvClient() {
-	var (
-		config  clientv3.Config
-		client  *clientv3.Client
-		kv      clientv3.KV
-		putResp *clientv3.PutResponse
-		getResp *clientv3.GetResponse
-		delResp *clientv3.DeleteResponse
-		kvpair  *mvccpb.KeyValue
-		err     error
-	)
-	config = clientv3.Config{
-		Endpoints:   []string{"127.0.0.1:2379"},
-		DialTimeout: 5 * time.Second,
-	}
-	if client, err = clientv3.New(config); err != nil {
-		fmt.Println("new client err:", err)
-	}
-	// 读写etcd的键值对
-	kv = clientv3.NewKV(client)
-	if putResp, err = kv.Put(context.Background(), "/demo/twokey", "twokeyvaule"); err != nil {
-		fmt.Println("kv put err:", err)
-	} else {
-		fmt.Println("Revision:", putResp.Header.Revision)
-		if putResp.PrevKv != nil {
-			fmt.Println("PrevValue:", string(putResp.PrevKv.Value))
-			fmt.Println("PrevValue:", string(putResp.PrevKv.Version))
-		}
-	}
-	if getResp, err = kv.Get(context.Background(), "/demo/twokey"); err != nil {
-		fmt.Println("kv get err:", err)
-	} else {
-		fmt.Println(getResp.Kvs)
-	}
+func txnclient() {
 
-	// clientv3.WithLimit(2)
-	if delResp, err = kv.Delete(context.TODO(), "/demo/onekey", clientv3.WithFromKey()); err != nil {
-		fmt.Println(err)
-	} else {
-		if len(delResp.PrevKvs) != 0 {
-			for _, kvpair = range delResp.PrevKvs {
-				fmt.Println("删除了:", string(kvpair.Key), string(kvpair.Value))
-			}
-		}
-	}
+	kv := clientv3.NewKV(client)
+	// 创建事务
+	txn := kv.Txn(context.Background())
 
 	/*
-		if getResp, err = kv.Get(context.Background(), "/demo/twokey", clientv3.WithPrefix()); err != nil {
-			fmt.Println("kv get err:", err)
-		} else {
-			fmt.Println(getResp.Kvs)
-		}
-
-		clientv3.WithPrefix()
-		clientv3.WithCountOnly()
+		func CreateRevision(key string) Cmp：key=xxx的创建版本必须满足…
+		func LeaseValue(key string) Cmp：key=xxx的Lease ID必须满足…
+		func ModRevision(key string) Cmp：key=xxx的最后修改版本必须满足…
+		func Value(key string) Cmp：key=xxx的创建值必须满足…
+		func Version(key string) Cmp：key=xxx的累计更新次数必须满足…
 	*/
 
-	/*
-		putResp.Header.Revision --> Revision: 7  --> 每次存入一个值  Revision都会加1
-		[key:"/demo/onekey" create_revision:5 mod_revision:7 version:3 value:"onekeyvaule" ]
-		create_revision --> key在创建时  Revision的值为key的create_revision
-		mod_revision --> mod_revision = Revision
-		version --> key每改变一次 会增加一次
-	*/
+	txnResp, err := txn.If(clientv3.Compare(clientv3.Value("/test/txn"), "=", "txvValue")).
+		Then(clientv3.OpGet("/test/txn")).
+		Else(clientv3.OpPut("/test/txn", "txvValue")).
+		Commit()
+
+	if err != nil {
+		log.Printf("txn err:%v \n", err.Error())
+		return
+	}
+
+	log.Println(txnResp.Succeeded)
+
+	if txnResp.Succeeded {
+		log.Println("~~~", txnResp.Responses[0].GetResponseRange().Kvs)
+	} else {
+		log.Println("!!!", txnResp.Responses[0].GetResponseRange().Kvs)
+	}
 }
+
+/*
+	putResp.Header.Revision --> Revision: 7  --> 每次存入一个值  Revision都会加1
+	[key:"/demo/onekey" create_revision:5 mod_revision:7 version:3 value:"onekeyvaule" ]
+	create_revision --> key在创建时  Revision的值为key的create_revision
+	mod_revision --> mod_revision = Revision
+	version --> key每改变一次 会增加一次
+*/

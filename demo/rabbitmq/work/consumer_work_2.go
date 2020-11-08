@@ -1,15 +1,32 @@
 package main
 
 import (
-	"github.com/dpCnx/go-study/demo/rabbitmq/mq"
+	"github.com/streadway/amqp"
 	"log"
 )
 
 func main() {
-	c := mq.InitChannel()
-	//1.申请队列，如果队列不存在会自动创建，存在则跳过创建
+
+	//创建连接 Connection
+	conn, err := amqp.Dial("amqp://dp:dp@192.168.172.128:5673/d")
+	//defer conn.Close()
+	if err != nil {
+		log.Println("amqp conn err:", err)
+		return
+	}
+	//创建Channel
+	c, err := conn.Channel()
+	//defer c.Close()
+	if err != nil {
+		log.Println("conn channel err:", err)
+		return
+	}
+
+	log.Println("初始化channel successful")
+
+	//申请队列，如果队列不存在会自动创建，存在则跳过创建
 	q, err := c.QueueDeclare(
-		"demo_test",
+		"demo_work",
 		//是否持久化
 		false,
 		//是否自动删除
@@ -25,8 +42,6 @@ func main() {
 		log.Println("申请队列失败:", err)
 		return
 	}
-
-
 
 	//接收消息
 	msgs, err := c.Consume(
@@ -48,16 +63,12 @@ func main() {
 		return
 	}
 
-	forever := make(chan bool)
 	//启用协程处理消息
 	go func() {
 		for d := range msgs {
-			//消息逻辑处理，可以自行设计逻辑
-			log.Printf("Received a message: %s", d.Body)
-
+			log.Printf("received a message: %s ---> routingkey: %s,--->consumertag : %s \n", d.Body, d.RoutingKey, d.ConsumerTag)
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
+	select {}
 }

@@ -59,13 +59,3 @@ services:
     ports:
       - "80:80"
       - "443:443"
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:management
-    restart: always
-    network_mode: bridge
-    volumes:
-      - "./data/rabbitmp:/var/lib/rabbitmq"
-    ports:
-      - "15673:15672" #管理界面ui使用的端口
-      - "5673:5672" #AMQP 0-9-1 without and with TLSclient端通信口

@@ -9,20 +9,55 @@ func main() {
 
 	//创建连接 Connection
 	conn, err := amqp.Dial("amqp://dp:dp@192.168.172.128:5673/d")
-	defer conn.Close()
 	if err != nil {
 		log.Println("amqp conn err:", err)
 		return
 	}
+	defer conn.Close()
 	//创建Channel
 	c, err := conn.Channel()
-	defer c.Close()
 	if err != nil {
 		log.Println("conn channel err:", err)
 		return
 	}
+	defer c.Close()
 
 	log.Println("初始化channel successful")
+
+	/*
+		Confirm
+	*/
+
+	go func() {
+
+		if err = c.Confirm(false); err != nil {
+			log.Println("c confirm err:", err)
+			return
+		}
+
+		confirChan := c.NotifyPublish(make(chan amqp.Confirmation))
+		for cc := range confirChan {
+			if cc.Ack {
+				log.Println("confirm:消息发送成功")
+			} else {
+				//这里表示消息发送到mq失败,可以处理失败流程
+				log.Println("confirm:消息发送失败")
+			}
+		}
+
+	}()
+
+	/*
+		return
+	*/
+
+	go func() {
+
+		cr := c.NotifyReturn(make(chan amqp.Return))
+		for r := range cr {
+			log.Println(string(r.Body))
+		}
+	}()
 
 	//尝试创建交换机
 	/*
@@ -84,7 +119,6 @@ func main() {
 		"demo_exchange_topic",
 		false,
 		nil)
-
 
 	//创建队列 --------------------------------------->
 	q2, err := c.QueueDeclare(

@@ -48,8 +48,23 @@ func main() {
 	go func() {
 		for d := range msgs {
 			log.Printf("received a message: %s ---> routingkey: %s,--->consumertag : %s \n", d.Body, d.RoutingKey, d.ConsumerTag)
+
+			//手动签收
+			if err := d.Ack(true); err != nil {
+				log.Println(err.Error())
+				return
+			}
+			//重回队列。如果设置为true，则消息重新回到queue，broker会重新发送该消息给消费端
+			d.Nack(true, true)
 		}
 	}()
 
 	select {}
+
 }
+
+/*
+	AcknowledgeMode.NONE：自动确认
+	AcknowledgeMode.AUTO：根据情况确认
+	AcknowledgeMode.MANUAL：手动确认
+*/

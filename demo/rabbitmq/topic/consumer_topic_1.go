@@ -24,6 +24,11 @@ func main() {
 
 	log.Println("初始化channel successful")
 
+	/*
+		xian liu
+	*/
+	//c.Qos()
+
 	//接收消息
 	msgs, err := c.Consume(
 		"demo_topic", // queue

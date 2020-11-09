@@ -165,6 +165,7 @@ func main() {
 			amqp.Publishing{
 				ContentType: "text/plain",
 				Body:        []byte("hello_demo"),
+				Expiration:  "5000", //end time
 			}); err != nil {
 			log.Println("申请队列失败:", err)
 			return

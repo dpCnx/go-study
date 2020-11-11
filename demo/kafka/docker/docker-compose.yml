@@ -1,0 +1,20 @@
+version: "3"
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    restart: always
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    volumes:
+      - /etc/localtime:/etc/localtim
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 192.168.172.129
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    restart: always

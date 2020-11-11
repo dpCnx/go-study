@@ -18,7 +18,7 @@ func server() {
 	config.Producer.Return.Errors = true
 
 	// 连接kafka同步
-	client, err := sarama.NewSyncProducer([]string{"10.25.27.192:9092"}, config)
+	client, err := sarama.NewSyncProducer([]string{"192.168.172.129:9092"}, config)
 	if err != nil {
 		log.Printf("newsyncproducer err:%v", err)
 		return
@@ -49,7 +49,7 @@ func serverAsync() {
 	config.Producer.Return.Successes = true
 	config.Producer.Return.Errors = true
 
-	producer, err := sarama.NewAsyncProducer([]string{"10.25.27.192:9092"}, config)
+	producer, err := sarama.NewAsyncProducer([]string{"192.168.172.129:9092"}, config)
 	if err != nil {
 		log.Printf("create producer error :%s\n", err.Error())
 		return
@@ -60,7 +60,7 @@ func serverAsync() {
 	// send message
 	msg := &sarama.ProducerMessage{
 		Topic: "test",
-		Value: sarama.ByteEncoder([]byte("hello")),
+		Value: sarama.ByteEncoder([]byte("hello kafka")),
 	}
 
 	// send to chain
@@ -78,6 +78,4 @@ func serverAsync() {
 	}()
 
 	select {}
-
-	//producer.Close()
 }

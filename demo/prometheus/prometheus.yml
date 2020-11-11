@@ -24,3 +24,7 @@ scrape_configs:
   - job_name: 'promethus'
     static_configs:
       - targets: ['0.0.0.0:9090']
+
+  - job_name: 'web'
+    static_configs:
+      - targets: ['0.0.0.0:8080']

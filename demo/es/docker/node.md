@@ -11,8 +11,9 @@ ERROR: Elasticsearch did not exit normally - check the logs at /usr/share/elasti
 
 ```
 java.nio.file.AccessDeniedException
+Error opening log file ‘logs/gc.log’: Permission denied
 
-权限的问题：chmod 777 logs  chmod 777 data
+权限的问题：chmod 777 logs  chmod 777 data (elasticsearch/data elasticsearch/logs)
 ```
 
 ```

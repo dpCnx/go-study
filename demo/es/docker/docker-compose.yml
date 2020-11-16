@@ -5,6 +5,7 @@ services:
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - "discovery.type=single-node"
+      - "LOGSPOUT=ignore"
     volumes:
       - ./elasticsearch/data:/usr/share/elasticsearch/data
       - ./elasticsearch/logs:/usr/share/elasticsearch/logs
@@ -18,6 +19,7 @@ services:
     image: docker.elastic.co/kibana/kibana:7.7.0
     environment:
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - LOGSPOUT=ignore
     container_name: kibana
     hostname: kibana
     depends_on:
@@ -28,6 +30,8 @@ services:
   elasticsearch-head:
     image: mobz/elasticsearch-head:5
     container_name: head
+    environment:
+      - LOGSPOUT=ignore
     volumes:
       - ./elasticsearch/head/Gruntfile.js:/usr/src/app/Gruntfile.js
       - ./elasticsearch/head/_site/app.js:/usr/src/app/_site/app.js
@@ -36,3 +40,25 @@ services:
       - "9100:9100"
     depends_on:
       - elasticsearch
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.7.0
+    container_name: logstash
+    environment:
+      - LOGSPOUT=ignore
+    volumes:
+      - ./elasticsearch/config:/usr/share/logstash/conf.d/
+      - ./elasticsearch/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5001:5000"
+    depends_on:
+      - elasticsearch
+  logspout:
+    image: gliderlabs/logspout:latest
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    links:
+      - logstash
+    command:
+      syslog+tcp://logstash:5001

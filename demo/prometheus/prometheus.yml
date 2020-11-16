@@ -23,8 +23,12 @@ scrape_configs:
 
   - job_name: 'promethus'
     static_configs:
-      - targets: ['0.0.0.0:9090']
+      - targets: ['192.168.172.129:9090']
 
   - job_name: 'web'
     static_configs:
-      - targets: ['0.0.0.0:8080']
+      - targets: ['192.168.172.129:8081']
+
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['192.168.172.129:8080']

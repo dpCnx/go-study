@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"net/http"
+	"time"
 	"web/middleware"
 )
 
@@ -18,9 +20,19 @@ func main() {
 			"message": "pong",
 		})
 	})
-	// listen and serve on 0.0.0.0:8080
-	if err := r.Run(); err != nil {
-		panic(err)
+
+	srv := &http.Server{
+		Addr:         ":8081",
+		Handler:      r,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		panic(err.Error())
+	}
 }
+
+/*
+	https://www.cnblogs.com/xiao987334176/p/12340743.html 查看docker仪表盘
+*/

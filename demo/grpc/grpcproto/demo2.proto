@@ -3,6 +3,7 @@ syntax = "proto3";
 package demo_proto;
 
 service StreamService {
+
     rpc List(StreamRequest) returns (stream StreamResponse) {};
 
     rpc Record(stream StreamRequest) returns (StreamResponse) {};

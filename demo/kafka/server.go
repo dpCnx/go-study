@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Shopify/sarama"
 	"log"
 )
@@ -18,27 +19,28 @@ func server() {
 	config.Producer.Return.Errors = true
 
 	// 连接kafka同步
-	client, err := sarama.NewSyncProducer([]string{"192.168.172.129:9092"}, config)
+	client, err := sarama.NewSyncProducer([]string{"10.25.27.192:9092"}, config)
 	if err != nil {
 		log.Printf("newsyncproducer err:%v", err)
 		return
 	}
 	defer client.Close()
 
-	// 构造一个消息
-	msg := &sarama.ProducerMessage{
-		Topic:     "test",
-		Value:     sarama.StringEncoder("hi"),
-		Partition: 2,
-		Key:       sarama.StringEncoder("test_key"),
-	}
-	partition, offset, err := client.SendMessage(msg)
-	if err != nil {
-		log.Printf("sendmessage err:%v", err)
-		return
-	}
+	for i := 0; i <= 10; i++ {
+		// 构造一个消息
+		msg := &sarama.ProducerMessage{
+			Topic: "test",
+			Value: sarama.StringEncoder(fmt.Sprintf("hi %d", i)),
+			Key:   sarama.StringEncoder("test_key"),
+		}
+		partition, offset, err := client.SendMessage(msg)
+		if err != nil {
+			log.Printf("sendmessage err:%v", err)
+			return
+		}
 
-	log.Printf("partition:%v---offset:%v", partition, offset)
+		log.Printf("partition:%v---offset:%v \n", partition, offset)
+	}
 }
 
 //异步
@@ -49,7 +51,7 @@ func serverAsync() {
 	config.Producer.Return.Successes = true
 	config.Producer.Return.Errors = true
 
-	producer, err := sarama.NewAsyncProducer([]string{"192.168.172.129:9092"}, config)
+	producer, err := sarama.NewAsyncProducer([]string{"10.25.27.192:9092"}, config)
 	if err != nil {
 		log.Printf("create producer error :%s\n", err.Error())
 		return
@@ -79,3 +81,12 @@ func serverAsync() {
 
 	select {}
 }
+
+/*
+	win启动kafka
+	zookeeper-server-start.bat ..\..\config\zookeeper.properties
+	kafka-server-start.bat ..\..\config\server.properties
+
+	java.nio.file.FileSystemExceptio
+	清空 log.dirs=D:\\kafka\\kafka_2.11-2.3.0\\kafka-logs 目录里面的文件，没有就新建一个
+*/

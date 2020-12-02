@@ -38,5 +38,36 @@ kubectl delete svc my-service #删除svc
 kubectl get pod -w #监控pod的状态 
 kubectl edit pod myapp-pod #修改容器
 kubectl get pod -- show-labels #查看容器的标签
+kubectl describe cm env-config #查看configmap
+```
+
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-service-deployment
+  labels:
+    app: nginx-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-service
+  template:
+    metadata:
+      labels:
+        app: nginx-service
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+      tolerations:
+		- key: "key1"
+  		  operator: "Equal"
+          value: "value1"
+          effect: "NoSchedule"
+          tolerationSeconds: 3600
 ```
 

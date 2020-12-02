@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/dpCnx/go-study/demo/grpc/etcdresolver"
 	pb "github.com/dpCnx/go-study/demo/grpc/grpcproto"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
@@ -45,7 +46,9 @@ func handler(request *pb.HelloRequest, replays chan *pb.HelloReplay) {
 
 func (s *server) GetHelloMsg(ctx context.Context, in *pb.HelloRequest) (*pb.HelloMessage, error) {
 
-	return &pb.HelloMessage{Msg: "hello" + in.Name}, nil
+	log.Printf("come===>")
+
+	return &pb.HelloMessage{Msg: "hello==>" + in.Name}, nil
 }
 
 func demoOne() {
@@ -263,6 +266,28 @@ func main() {
 	//demothree()
 
 	//demofour()
+
+	addr := "127.0.0.1:9997"
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Printf("net listen err: %v \n", err)
+		return
+	}
+	s := grpc.NewServer()
+	pb.RegisterHelloServerServer(s, &server{})
+
+	//把服务注册到etcd
+	ser, err := etcdresolver.NewServiceRegister([]string{"127.0.0.1:2379"}, etcdresolver.Server_name, addr, 5)
+	if err != nil {
+		log.Fatalf("register service err: %v", err)
+	}
+	defer ser.Close()
+
+	if err = s.Serve(ln); err != nil {
+		log.Printf("s serve err: %v \n", err)
+		return
+	}
 }
 
 /*

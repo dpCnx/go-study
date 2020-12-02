@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"github.com/dpCnx/go-study/demo/grpc/etcdresolver"
 	pt "github.com/dpCnx/go-study/demo/grpc/grpcproto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/resolver"
 	"io"
 	"log"
 	"time"
@@ -12,7 +14,7 @@ import (
 
 func main() {
 
-	demoOne()
+	//demoOne()
 
 	//demoTwo()
 
@@ -23,6 +25,30 @@ func main() {
 	//demoFive()
 
 	//demoSix()
+
+	demoSeven()
+}
+
+func demoSeven() {
+	r := etcdresolver.NewServiceDiscovery([]string{"127.0.0.1:2379"})
+	resolver.Register(r)
+	conn, err := grpc.Dial(r.Scheme()+"://author/"+etcdresolver.Server_name, grpc.WithBalancerName("round_robin"), grpc.WithInsecure())
+	if err != nil {
+		log.Printf("grpc dial err: %s \n", err.Error())
+		return
+	}
+	defer conn.Close()
+	c := pt.NewHelloServerClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	for i := 0; i < 10; i++ {
+		res, err := c.GetHelloMsg(ctx, &pt.HelloRequest{Name: "d"})
+		if err != nil {
+			log.Printf("grpc dial err: %s \n", err.Error())
+			return
+		}
+		log.Println("resp: ", res.Msg)
+	}
 }
 
 // 实现grpc.PerRPCCredentials接⼝

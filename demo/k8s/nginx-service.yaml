@@ -19,6 +19,20 @@ spec:
           image: nginx
           ports:
             - containerPort: 80
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+            - name: directory-volume
+              mountPath: /etc/
+      volumes:
+        - name: config-volume
+          configMap:
+            name: special-config
+        - name: directory-volume
+          hostPath:
+            path: /data
+            type: Directory
+      restartPolicy: Always
 ---
 kind: Service
 apiVersion: v1
@@ -29,7 +43,7 @@ spec:
   selector:
     app: nginx-service
   ports:
-  - protocol: TCP
-    nodePort: 32222
-    port: 80
-    targetPort: 80
+    - protocol: TCP
+      nodePort: 32222
+      port: 80
+      targetPort: 80

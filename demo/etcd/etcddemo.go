@@ -16,14 +16,14 @@ var (
 func main() {
 	initEtcd()
 
-	txnclient()
+	kvClient()
 
 }
 
 func initEtcd() {
 
 	config := clientv3.Config{
-		Endpoints:   []string{"192.168.172.129:2379"},
+		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: 5 * time.Second,
 	}
 	if client, err = clientv3.New(config); err != nil {

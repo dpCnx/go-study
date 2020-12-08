@@ -569,7 +569,7 @@ func quary() {
 		"size": 1,
 	}*/
 
-	//search_after 使用 通过第一次的返回值里面的sort继续查询
+	//search_after 使用 通过第一次的返回值里面的sort继续查询 通过排序的正序与倒叙来获取当前值的前几行和后几行
 	// https://blog.csdn.net/UbuntuTouch/article/details/101036040
 	body := map[string]interface{}{
 		"query": map[string]interface{}{

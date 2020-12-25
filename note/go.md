@@ -1,6 +1,8 @@
 ### go
 
 ```go
+//查询三方库
+https://pkg.go.dev/
 //设置代理
 https://studygolang.com/articles/18576?fr=sidebar 
 //--------------------------gin---------------------

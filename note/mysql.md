@@ -8,5 +8,8 @@
 # https://www.jianshu.com/p/8991cbca3854
 # 回表的情况
 
+# https://blog.csdn.net/xuqimm/article/details/78955322
+# mysql查询group_concat()数据不全问题解决
+
 ```
 

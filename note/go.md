@@ -1,6 +1,8 @@
 ### go
 
 ```go
+//go 夜聊
+https://talkgo.fm/
 //查询三方库
 https://pkg.go.dev/
 //设置代理

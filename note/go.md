@@ -7,6 +7,8 @@ https://talkgo.fm/
 https://pkg.go.dev/
 //设置代理
 https://studygolang.com/articles/18576?fr=sidebar 
+//gorm
+https://blog.csdn.net/yes169yes123/article/details/108016990?spm=1001.2014.3001.5502
 //--------------------------gin---------------------
 //匹配任何方法路由
 router.Any() 

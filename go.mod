@@ -1,25 +1,28 @@
-module github.com/dpCnx/go-study
+module go-study
 
-go 1.14
+go 1.16
 
 require (
-	github.com/Shopify/sarama v1.27.2
-	github.com/bsm/sarama-cluster v2.1.15+incompatible
-	github.com/coreos/etcd v3.3.25+incompatible
-	github.com/elastic/go-elasticsearch/v7 v7.9.0
-	github.com/go-acme/lego/v3 v3.9.0
-	github.com/golang/protobuf v1.4.3
+	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect
+	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
+	github.com/alibaba/sentinel-golang v1.0.2
+	github.com/elastic/go-elasticsearch/v7 v7.12.0
+	github.com/gin-gonic/gin v1.7.1
+	github.com/go-ole/go-ole v1.2.5 // indirect
+	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/websocket v1.4.2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
-	github.com/micro/go-micro v1.18.0
-	github.com/micro/go-micro/v2 v2.9.1
-	github.com/micro/go-plugins v1.5.1
-	github.com/micro/go-plugins/wrapper/select/roundrobin/v2 v2.9.1
-	github.com/samuel/go-zookeeper v0.0.0-20200724154423-2164a8ac840e
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/natefinch/lumberjack v2.0.0+incompatible
+	github.com/opentracing/opentracing-go v1.2.0
+	github.com/prometheus/client_golang v1.10.0
 	github.com/streadway/amqp v1.0.0
-	golang.org/x/net v0.0.0-20201022231255-08b38378de70
-	google.golang.org/grpc v1.33.1
-	google.golang.org/grpc/examples v0.0.0-20201022203757-eb7fc22e4562 // indirect
+	github.com/uber/jaeger-client-go v2.28.0+incompatible
+	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
+	go.uber.org/zap v1.16.0
+	google.golang.org/grpc v1.37.1
+	gopkg.in/ini.v1 v1.62.0
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+	gorm.io/driver/mysql v1.1.0
+	gorm.io/gorm v1.21.10
 )
-
-replace google.golang.org/grpc v1.33.1 => google.golang.org/grpc v1.26.0

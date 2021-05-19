@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-service-deployment
+  labels:
+    app: nginx-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-service
+  template:
+    metadata:
+      labels:
+        app: nginx-service
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+      tolerations:
+      - key: "key1"
+          operator: "Equal"
+            value: "value1"
+            effect: "NoSchedule"
+            tolerationSeconds: 3600
